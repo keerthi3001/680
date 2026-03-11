@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="hw01" default="test" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+  <property name="src.main" value="src/main"/>
+  <property name="src.test" value="src/test"/>
+  <property name="build.main" value="build/main"/>
+  <property name="build.test" value="build/test"/>
+  <property name="lib.dir" value="lib"/>
+  <property name="ivy.install.version" value="2.5.2"/>
+
+  <target name="bootstrap-ivy" unless="ivy.available">
+    <mkdir dir="${lib.dir}"/>
+    <get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+         dest="${lib.dir}/ivy-${ivy.install.version}.jar" skipexisting="true"/>
+    <path id="ivy.classpath">
+      <fileset dir="${lib.dir}" includes="ivy-*.jar"/>
+    </path>
+    <taskdef uri="antlib:org.apache.ivy.ant"
+             resource="org/apache/ivy/ant/antlib.xml"
+             classpathref="ivy.classpath"/>
+  </target>
+
+  <target name="resolve" depends="bootstrap-ivy">
+    <mkdir dir="${lib.dir}"/>
+    <ivy:retrieve pattern="${lib.dir}/[artifact]-[revision](-[classifier]).[ext]"/>
+  </target>
+
+  <target name="clean">
+    <delete dir="${build.main}"/>
+    <delete dir="${build.test}"/>
+  </target>
+
+  <target name="init" depends="resolve">
+    <mkdir dir="${build.main}"/>
+    <mkdir dir="${build.test}"/>
+    <path id="classpath">
+      <pathelement location="${build.main}"/>
+      <pathelement location="${build.test}"/>
+      <fileset dir="${lib.dir}" includes="*.jar"/>
+    </path>
+  </target>
+
+  <target name="compile" depends="init">
+    <javac srcdir="${src.main}" destdir="${build.main}" includeantruntime="false" release="17">
+      <classpath refid="classpath"/>
+      <include name="hw1/*.java"/>
+    </javac>
+    <javac srcdir="${src.test}" destdir="${build.test}" includeantruntime="false" release="17">
+      <classpath refid="classpath"/>
+      <include name="hw1/*.java"/>
+    </javac>
+  </target>
+
+  <target name="test" depends="compile">
+    <taskdef uri="junitlauncher"
+             resource="org/junit/platform/launcher/ant/antlib.xml"
+             classpathref="classpath"/>
+    <junitlauncher printSummary="true" haltOnFailure="true">
+      <classpath refid="classpath"/>
+      <testclasses outputdir="${build.test}">
+        <fileset dir="${build.test}">
+          <include name="**/*Test.class"/>
+        </fileset>
+      </testclasses>
+      <listener type="legacy-plain" sendSysOut="true"/>
+      <listener type="legacy-xml"/>
+    </junitlauncher>
+  </target>
+</project>
