@@ -1,0 +1,24 @@
+# HW03 — Smart Thermostat (State Pattern)
+
+Implements a thermostat with states: IDLE, HEATING, COOLING, AWAY (eco), OFF.
+Behavior changes by state:
+- temperatureMeasured(t) decides heat/cool/off
+- setTarget(t) updates target
+- awayOn/awayOff toggles eco band control
+- powerLost/powerRestored handles outage
+
+Build & Test
+------------
+ant clean
+ant test
+
+Design Notes
+------------
+Uses the State pattern to avoid if/else chains.
+States encapsulate transitions and actions; the context (Thermostat) owns actuators.
+Unit tests verify state transitions and actuator behavior.
+
+Files
+-----
+src/main/hw03: Thermostat*.java (6 states + context + interface)
+src/test/hw03:  ThermostatTest.java

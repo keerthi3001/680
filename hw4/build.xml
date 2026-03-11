@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="hw4" default="test" basedir="."
+         xmlns:ivy="antlib:org.apache.ivy.ant">
+
+  <!-- ====== properties ====== -->
+  <property name="src.main.dir" value="src/main"/>
+  <property name="src.test.dir" value="src/test"/>
+  <property name="build.dir" value="build"/>
+  <property name="build.main" value="${build.dir}/main"/>
+  <property name="build.test" value="${build.dir}/test"/>
+  <property name="build.reports" value="${build.dir}/reports"/>
+  <property name="lib.dir" value="lib"/>
+
+  <!-- ====== Ivy bootstrap ====== -->
+  <property name="ivy.install.version" value="2.5.2"/>
+  <property name="ivy.jar.path" value="${lib.dir}/ivy-${ivy.install.version}.jar"/>
+
+  <target name="bootstrap-ivy">
+    <mkdir dir="${lib.dir}"/>
+    <get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+         dest="${ivy.jar.path}" skipexisting="true"/>
+    <path id="ivy.classpath">
+      <fileset file="${ivy.jar.path}"/>
+    </path>
+    <taskdef resource="org/apache/ivy/ant/antlib.xml"
+             uri="antlib:org.apache.ivy.ant"
+             classpathref="ivy.classpath"/>
+  </target>
+
+  <!-- ====== resolve deps ====== -->
+  <target name="resolve" depends="bootstrap-ivy">
+    <ivy:retrieve pattern="${lib.dir}/[artifact]-[revision](-[classifier]).[ext]"/>
+  </target>
+
+  <!-- ====== init ====== -->
+  <target name="init">
+    <mkdir dir="${build.main}"/>
+    <mkdir dir="${build.test}"/>
+    <mkdir dir="${build.reports}"/>
+  </target>
+
+  <!-- ====== classpaths ====== -->
+  <path id="compile.classpath">
+    <fileset dir="${lib.dir}">
+      <include name="*.jar"/>
+    </fileset>
+  </path>
+
+  <path id="test.classpath">
+    <path refid="compile.classpath"/>
+    <pathelement path="${build.main}"/>
+    <pathelement path="${build.test}"/>
+  </path>
+
+  <!-- ====== compile main ====== -->
+  <target name="compile" depends="init,resolve">
+    <javac srcdir="${src.main.dir}" destdir="${build.main}" includeantruntime="false" release="17"/>
+  </target>
+
+  <!-- ====== compile tests ====== -->
+  <target name="compile-tests" depends="compile">
+    <javac srcdir="${src.test.dir}" destdir="${build.test}" includeantruntime="false" release="17">
+      <classpath refid="test.classpath"/>
+    </javac>
+  </target>
+
+  <!-- ====== run tests via junitlauncher (minimal; no listeners/fork) ====== -->
+  <target name="test" depends="compile-tests">
+    <junitlauncher printsummary="true" haltonfailure="true">
+      <classpath refid="test.classpath"/>
+      <testclasses>
+        <fileset dir="${build.test}">
+          <include name="**/*Test.class"/>
+        </fileset>
+      </testclasses>
+    </junitlauncher>
+    <echo>JUnit ran. (XML reports and forking disabled to match your Ant capabilities.)</echo>
+  </target>
+
+  <target name="test-console" depends="compile-tests">
+    <java classname="org.junit.platform.console.ConsoleLauncher" fork="true" failonerror="true">
+      <classpath refid="test.classpath"/>
+      <arg value="--scan-classpath"/>
+      <arg value="${build.test}"/>
+      <arg value="--details=summary"/>
+    </java>
+  </target>
+
+  <!-- ====== clean ====== -->
+  <target name="clean">
+    <delete dir="${build.dir}"/>
+  </target>
+  <target name="build" depends="compile-tests">
+    <echo message="Build completed successfully — classes compiled to ${build.main} and ${build.test}."/>
+  </target>
+
+</project>
