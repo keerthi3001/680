@@ -1,0 +1,75 @@
+<project name="cs680-hw06" default="test" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+  <property name="src.main" value="src/main"/>
+  <property name="src.test" value="src/test"/>
+  <property name="out.main" value="build/main"/>
+  <property name="out.test" value="build/test"/>
+  <property name="lib.dir"  value="lib"/>
+
+  <!-- Bootstrap Ivy -->
+  <target name="bootstrap-ivy">
+    <mkdir dir="${lib.dir}"/>
+    <get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/2.5.2/ivy-2.5.2.jar"
+         dest="${lib.dir}/ivy-2.5.2.jar" usetimestamp="true"/>
+  </target>
+
+  <!-- Resolve dependencies -->
+  <target name="resolve" depends="bootstrap-ivy">
+    <taskdef resource="org/apache/ivy/ant/antlib.xml"
+             uri="antlib:org.apache.ivy.ant"
+             classpath="${lib.dir}/ivy-2.5.2.jar"/>
+    <ivy:retrieve/>
+  </target>
+
+  <path id="cp">
+    <pathelement location="${out.main}"/>
+    <pathelement location="${out.test}"/>
+    <fileset dir="${lib.dir}" includes="**/*.jar"/>
+  </path>
+
+  <target name="init" depends="resolve">
+    <mkdir dir="${out.main}"/>
+    <mkdir dir="${out.test}"/>
+  </target>
+
+  <target name="compile" depends="init" description="Compile main and test classes">
+    <javac srcdir="${src.main}" destdir="${out.main}" includeantruntime="false">
+      <classpath refid="cp"/>
+    </javac>
+    <javac srcdir="${src.test}" destdir="${out.test}" includeantruntime="false">
+      <classpath refid="cp"/>
+    </javac>
+  </target>
+
+  <target name="test" depends="compile" description="Run JUnit tests">
+    <junitlauncher printsummary="true" haltonfailure="true">
+      <classpath refid="cp"/>
+      <testclasses outputdir="${out.test}">
+        <fileset dir="${out.test}">
+          <include name="**/*Test.class"/>
+        </fileset>
+      </testclasses>
+      <listener type="legacy-plain" sendSysOut="true"/>
+      <listener type="legacy-xml" sendSysOut="true" sendSysErr="true"/>
+    </junitlauncher>
+  </target>
+
+  <!-- New: let `ant build` work -->
+  <target name="build" depends="compile" description="Alias for compile"/>
+
+  <!-- Optional: package main classes into a JAR -->
+  <target name="jar" depends="compile" description="Create dist/hw06.jar">
+    <mkdir dir="dist"/>
+    <jar destfile="dist/hw06.jar" basedir="${out.main}">
+      <manifest>
+        <attribute name="Implementation-Title" value="CS680 HW06"/>
+        <attribute name="Implementation-Version" value="1.0"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="clean" description="Remove build and lib dirs">
+    <delete dir="build"/>
+    <delete dir="lib"/>
+    <delete dir="dist"/>
+  </target>
+</project>
