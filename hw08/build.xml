@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="hw08" default="test" basedir="."
+         xmlns:ivy="antlib:org.apache.ivy.ant">
+
+  <!-- Your tree uses src/main and src/test (no 'java' subfolder) -->
+  <property name="src.main" value="src/main"/>
+  <property name="src.test" value="src/test"/>
+  <property name="build.main" value="build/main"/>
+  <property name="build.test" value="build/test"/>
+  <property name="reports" value="build/reports"/>
+  <property name="lib.dir" value="lib"/>
+
+  <target name="init">
+    <mkdir dir="${build.main}"/>
+    <mkdir dir="${build.test}"/>
+    <mkdir dir="${reports}"/>
+    <mkdir dir="${lib.dir}"/>
+  </target>
+
+  <!-- Bootstrap Ivy and define ivy:* tasks -->
+  <target name="bootstrap-ivy" depends="init">
+    <get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/2.5.2/ivy-2.5.2.jar"
+         dest="${lib.dir}/ivy-2.5.2.jar" skipexisting="true"/>
+    <taskdef resource="org/apache/ivy/ant/antlib.xml"
+             uri="antlib:org.apache.ivy.ant"
+             classpath="${lib.dir}/ivy-2.5.2.jar"/>
+  </target>
+
+  <!-- Resolve dependencies into lib/ -->
+    <target name="resolve" depends="bootstrap-ivy">
+    <ivy:retrieve pattern="${lib.dir}/[artifact]-[revision].[ext]" type="jar"/>
+  </target>
+
+
+  <path id="classpath">
+    <fileset dir="${lib.dir}">
+      <include name="**/*.jar"/>
+    </fileset>
+  </path>
+
+  <target name="compile" depends="resolve">
+    <javac srcdir="${src.main}" destdir="${build.main}" includeantruntime="false">
+      <classpath refid="classpath"/>
+      <compilerarg line="--release 17"/>
+    </javac>
+  </target>
+
+  <!-- Allows: ant build (compile main only) -->
+  <target name="build" depends="compile"/>
+
+  <target name="compile-test" depends="compile">
+    <javac srcdir="${src.test}" destdir="${build.test}" includeantruntime="false">
+      <classpath>
+        <path refid="classpath"/>
+        <pathelement location="${build.main}"/>
+      </classpath>
+      <compilerarg line="--release 17"/>
+    </javac>
+  </target>
+
+  <target name="test" depends="compile-test">
+    <junitlauncher printsummary="true">
+      <classpath>
+        <path refid="classpath"/>
+        <pathelement location="${build.main}"/>
+        <pathelement location="${build.test}"/>
+      </classpath>
+      <testclasses outputdir="${reports}">
+        <fileset dir="${build.test}">
+          <include name="**/*Test.class"/>
+        </fileset>
+      </testclasses>
+    </junitlauncher>
+    <echo>JUnit reports -> ${reports}</echo>
+  </target>
+
+  <target name="clean">
+    <delete dir="build"/>
+    <delete dir="lib"/>
+  </target>
+</project>
