@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="hw09" default="test" basedir="."
+         xmlns:ivy="antlib:org.apache.ivy.ant">
+
+  <property name="src.main" value="src/main"/>
+  <property name="src.test" value="src/test"/>
+
+  <property name="build.main" value="build/main"/>
+  <property name="build.test" value="build/test"/>
+  <property name="reports" value="build/reports"/>
+  <property name="lib.dir" value="lib"/>
+
+  <!-- EXACT HW06-like clean output -->
+  <target name="clean">
+    <delete dir="build" failonerror="false"/>
+    <delete dir="${lib.dir}" failonerror="false"/>
+  </target>
+
+  <!-- HW06 style: bootstrap ivy only creates lib and downloads ivy -->
+  <target name="bootstrap-ivy">
+    <mkdir dir="${lib.dir}"/>
+    <get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/2.5.2/ivy-2.5.2.jar"
+         dest="${lib.dir}/ivy-2.5.2.jar"
+         usetimestamp="true"/>
+  </target>
+
+  <!-- HW06 style: resolve after bootstrap -->
+  <target name="resolve" depends="bootstrap-ivy">
+    <taskdef resource="org/apache/ivy/ant/antlib.xml"
+             uri="antlib:org.apache.ivy.ant"
+             classpath="${lib.dir}/ivy-2.5.2.jar"/>
+    <ivy:retrieve pattern="${lib.dir}/[artifact]-[revision](-[classifier]).[ext]"/>
+  </target>
+
+  <!-- HW06 style: init happens AFTER resolve -->
+  <target name="init" depends="resolve">
+    <mkdir dir="${build.main}"/>
+    <mkdir dir="${build.test}"/>
+    <mkdir dir="${reports}"/>
+  </target>
+
+  <path id="classpath">
+    <fileset dir="${lib.dir}" includes="*.jar"/>
+  </path>
+
+  <target name="compile" depends="init">
+    <javac srcdir="${src.main}" destdir="${build.main}" includeantruntime="false">
+      <classpath refid="classpath"/>
+    </javac>
+
+    <javac srcdir="${src.test}" destdir="${build.test}" includeantruntime="false">
+      <classpath>
+        <path refid="classpath"/>
+        <pathelement location="${build.main}"/>
+      </classpath>
+    </javac>
+  </target>
+
+  <target name="test" depends="compile">
+    <junitlauncher printSummary="true" haltOnFailure="true">
+      <classpath>
+        <path refid="classpath"/>
+        <pathelement location="${build.main}"/>
+        <pathelement location="${build.test}"/>
+      </classpath>
+
+      <testclasses>
+        <fileset dir="${build.test}">
+          <include name="**/*Test.class"/>
+        </fileset>
+      </testclasses>
+
+      <listener type="legacy-plain" sendSysOut="true"/>
+    </junitlauncher>
+  </target>
+
+</project>
