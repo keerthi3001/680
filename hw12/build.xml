@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="cs680-hw12" default="test" basedir="."
+         xmlns:ivy="antlib:org.apache.ivy.ant">
+
+    
+    <property name="src.main.dir"   location="src/main"/>
+    <property name="src.test.dir"   location="src/test"/>
+    <property name="build.dir"      location="build"/>
+    <property name="build.main.dir" location="${build.dir}/main"/>
+    <property name="build.test.dir" location="${build.dir}/test"/>
+    <property name="reports.dir"    location="${build.dir}/reports"/>
+    <property name="lib.dir"        location="lib"/>
+
+    
+    <target name="bootstrap-ivy">
+        <mkdir dir="${lib.dir}"/>
+        <get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/2.5.2/ivy-2.5.2.jar"
+             dest="${lib.dir}/ivy-2.5.2.jar"/>
+    </target>
+
+    <target name="resolve" depends="bootstrap-ivy">
+        <taskdef resource="org/apache/ivy/ant/antlib.xml"
+                 uri="antlib:org.apache.ivy.ant"
+                 classpath="${lib.dir}/ivy-2.5.2.jar"/>
+
+        <ivy:resolve file="ivy.xml"/>
+
+        
+        <ivy:retrieve pattern="${lib.dir}/[artifact]-[revision].[ext]"
+                      conf="default"
+                      type="jar"/>
+    </target>
+
+   
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${lib.dir}"/>
+    </target>
+
+    
+    <target name="init" depends="resolve">
+        <mkdir dir="${build.main.dir}"/>
+        <mkdir dir="${build.test.dir}"/>
+        <mkdir dir="${reports.dir}"/>
+    </target>
+
+   
+    <target name="compile" depends="init">
+        <javac srcdir="${src.main.dir}"
+               destdir="${build.main.dir}"
+               includeantruntime="false">
+            <classpath>
+                <fileset dir="${lib.dir}">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+        </javac>
+    </target>
+
+    
+    <target name="compile-test" depends="compile">
+        <javac srcdir="${src.test.dir}"
+               destdir="${build.test.dir}"
+               includeantruntime="false">
+            <classpath>
+                <pathelement path="${build.main.dir}"/>
+                <fileset dir="${lib.dir}">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+        </javac>
+    </target>
+
+    <!-- Allows: ant build (compile main only) -->
+    <target name="build" depends="compile"/>
+
+    
+    <path id="test.classpath">
+        <pathelement path="${build.main.dir}"/>
+        <pathelement path="${build.test.dir}"/>
+
+        <fileset dir="${lib.dir}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    
+    <target name="test" depends="compile-test">
+        <mkdir dir="${reports.dir}"/>
+
+        <junitlauncher printsummary="true">
+            <classpath refid="test.classpath"/>
+
+            <testclasses outputdir="${reports.dir}">
+                <fileset dir="${build.test.dir}">
+                    <include name="**/*Test.class"/>
+                </fileset>
+            </testclasses>
+        </junitlauncher>
+    </target>
+
+</project>

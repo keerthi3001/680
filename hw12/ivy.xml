@@ -1,0 +1,18 @@
+<ivy-module version="2.0">
+    <info organisation="cs680" module="hw12"/>
+
+    <dependencies>
+        <!-- JUnit Jupiter API + Engine -->
+        <dependency org="org.junit.jupiter" name="junit-jupiter-api" rev="5.11.1"/>
+        <dependency org="org.junit.jupiter" name="junit-jupiter-engine" rev="5.11.1"/>
+
+        <!-- Required JUnit 5 platform modules -->
+        <dependency org="org.junit.platform" name="junit-platform-commons" rev="1.11.1"/>
+        <dependency org="org.junit.platform" name="junit-platform-engine" rev="1.11.1"/>
+        <dependency org="org.junit.platform" name="junit-platform-launcher" rev="1.11.1"/>
+
+        <!-- Supporting libraries -->
+        <dependency org="org.opentest4j" name="opentest4j" rev="1.3.0"/>
+        <dependency org="org.apiguardian" name="apiguardian-api" rev="1.1.2"/>
+    </dependencies>
+</ivy-module>
