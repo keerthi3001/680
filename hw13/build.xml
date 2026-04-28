@@ -1,0 +1,69 @@
+<project name="hw13" default="clean" basedir="."
+         xmlns:ivy="antlib:org.apache.ivy.ant">
+
+    <property name="src" location="src/main"/>
+    <property name="src.test" location="src/test"/>
+    <property name="bin" location="build/main"/>
+    <property name="bin.test" location="build/test"/>
+    <property name="ivy.lib" location="lib"/>
+
+    <!-- Download Ivy -->
+    <target name="bootstrap-ivy">
+        <mkdir dir="${ivy.lib}"/>
+        <get src="https://repo1.maven.org/maven2/org/apache/ivy/ivy/2.5.2/ivy-2.5.2.jar"
+             dest="${ivy.lib}/ivy-2.5.2.jar"
+             usetimestamp="true"/>
+        <taskdef resource="org/apache/ivy/ant/antlib.xml"
+                 uri="antlib:org.apache.ivy.ant"
+                 classpath="${ivy.lib}/ivy-2.5.2.jar"/>
+    </target>
+
+    <!-- Download dependencies -->
+    <target name="download" depends="bootstrap-ivy">
+        <ivy:retrieve pattern="${ivy.lib}/[artifact]-[revision].[type].[ext]"/>
+    </target>
+
+    <target name="init" depends="download">
+        <mkdir dir="${bin}"/>
+        <mkdir dir="${bin.test}"/>
+
+        <path id="classpath">
+            <pathelement location="${bin}"/>
+            <pathelement location="${bin.test}"/>
+            <fileset dir="${ivy.lib}" includes="*.jar"/>
+        </path>
+    </target>
+
+    <target name="compile" depends="init">
+        <javac srcdir="${src}" destdir="${bin}" includeAntRuntime="false">
+            <classpath refid="classpath"/>
+        </javac>
+
+        <javac srcdir="${src.test}" destdir="${bin.test}" includeAntRuntime="false">
+            <classpath refid="classpath"/>
+        </javac>
+    </target>
+
+    <!-- Allows: ant build (compile main only) -->
+    <target name="build" depends="init">
+        <javac srcdir="${src}" destdir="${bin}" includeAntRuntime="false">
+            <classpath refid="classpath"/>
+        </javac>
+    </target>
+
+    <target name="test" depends="compile">
+        <junitlauncher haltOnFailure="true" printSummary="true">
+            <classpath refid="classpath"/>
+            <testclasses outputdir="${bin.test}">
+                <fileset dir="${bin.test}">
+                    <include name="cs680/hw13/*Test.class"/>
+                </fileset>
+            </testclasses>
+        </junitlauncher>
+    </target>
+
+    <target name="clean" depends="test">
+        <delete dir="build"/>
+    </target>
+
+</project>
